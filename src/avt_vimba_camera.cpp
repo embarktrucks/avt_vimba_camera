@@ -265,6 +265,7 @@ void AvtVimbaCamera::updateConfig(Config& config) {
   updatePixelFormatConfig(config);
   updateAcquisitionConfig(config);
   updateIrisConfig(config);
+  updateMeteringROIConfig(config);
   config_ = config;
 
   if (on_init_) {
@@ -1124,6 +1125,61 @@ void AvtVimbaCamera::updateROIConfig(Config& config) {
       << "\n\tOffsetY : " << config.roi_offset_y << " was " << config_.roi_offset_y
       << "\n\tWidth   : " << config.width        << " was " << config_.width
       << "\n\tHeight  : " << config.height       << " was " << config_.height);
+  }
+}
+
+
+/** Change the ROI configuration */
+void AvtVimbaCamera::updateMeteringROIConfig(Config& config) {
+  bool changed = false;
+
+  // Metering Region of interest configuration
+
+  int max_width, max_height;
+  getFeatureValue("WidthMax", max_width);
+  getFeatureValue("HeightMax", max_height);
+  
+  config.dsp_subregion_bottom  = std::min(config.dsp_subregion_bottom,  (int)max_height);
+  config.dsp_subregion_left    = std::max(config.dsp_subregion_left, (int)0);
+  config.dsp_subregion_right   = std::min(config.dsp_subregion_right, (int)max_width);
+  config.dsp_subregion_top     = std::max(config.dsp_subregion_top, (int)0);
+
+  // If bottom is smaller than top, swap them
+  if(config.dsp_subregion_bottom < config.dsp_subregion_top){
+      int temp_buf = config.dsp_subregion_bottom;
+      config.dsp_subregion_bottom  = config.dsp_subregion_top;
+      config.dsp_subregion_top = temp_buf;
+  }
+  // If right is smaller than left, swap them
+  if(config.dsp_subregion_right < config.dsp_subregion_left){
+      int temp_buf = config.dsp_subregion_right;
+      config.dsp_subregion_right  = config.dsp_subregion_left;
+      config.dsp_subregion_left = temp_buf;
+  }
+
+  if (config.dsp_subregion_bottom != config_.dsp_subregion_bottom || on_init_) {
+    changed = true;
+    setFeatureValue("DSPSubregionBottom", static_cast<VmbInt64_t>(config.dsp_subregion_bottom));
+  }
+  if (config.dsp_subregion_left != config_.dsp_subregion_left || on_init_) {
+    changed = true;
+    setFeatureValue("DSPSubregionLeft", static_cast<VmbInt64_t>(config.dsp_subregion_left));
+  }
+  if (config.dsp_subregion_right != config_.dsp_subregion_right || on_init_) {
+    changed = true;
+    setFeatureValue("DSPSubregionRight", static_cast<VmbInt64_t>(config.dsp_subregion_right));
+  }
+  if (config.dsp_subregion_top != config_.dsp_subregion_top || on_init_) {
+    changed = true;
+    setFeatureValue("DSPSubregionTop", static_cast<VmbInt64_t>(config.dsp_subregion_top));
+  }
+
+  if(changed && show_debug_prints_){
+    ROS_INFO_STREAM("New Metering ROI config (" << config.frame_id << ") : "
+      << "\n\DSPSubregionBottom : " << config.dsp_subregion_bottom << " was " << config_.dsp_subregion_bottom
+      << "\n\DSPSubregionLeft : " << config.dsp_subregion_left << " was " << config_.dsp_subregion_left
+      << "\n\DSPSubregionRight   : " << config.dsp_subregion_right        << " was " << config_.dsp_subregion_right
+      << "\n\DSPSubregionTop  : " << config.dsp_subregion_top       << " was " << config_.dsp_subregion_top);
   }
 }
 

@@ -67,6 +67,11 @@
 		<param name="y_offset" value="9"/>
 		<param name="width" value="1920"/>
 		<param name="height" value="1440"/>
+		
+		<param name="dsp_subregion_bottom" value="4095"/>
+		<param name="dsp_subregion_left" value="0"/>
+		<param name="dsp_subregion_right" value="4095"/>
+		<param name="dsp_subregion_top" value="0"/>
 
 		<param name="stream_bytes_per_second" value="400000000"/>
 	</node>
